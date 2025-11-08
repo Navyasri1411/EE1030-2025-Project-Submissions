@@ -1,0 +1,132 @@
+\documentclass[a4paper,12pt]{article}
+
+% --------------------------------------------------
+% PACKAGES
+% --------------------------------------------------
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{\textbf{Image Compression Using  Singular Value Decomposition}\\
+\large Matrix Theory (EE1030)}
+\author{J.Navya sri \\ Roll No: EE25BTECH11028}
+\date{November 2025}
+
+\begin{document}
+
+\maketitle
+\begin{center}
+\end{center}
+
+\bigskip
+
+% --------------------------------------------------
+\section{Summary of strang's video}
+The Singular Value Decomposition (SVD) factorizes any matrix \(A\) as 
+\[
+A = U \Sigma V^T
+\]
+where \(U\) and \(V\) are orthogonal matrices and \(\Sigma\) holds the singular values. 
+It generalizes eigenvalue decomposition and works for any rectangular matrix. 
+Geometrically, SVD represents a rotation, scaling, and another rotation. 
+Large singular values capture the main information or energy of the matrix. 
+By keeping only the top \(k\) singular values, we get the best low-rank approximation. 
+SVD is widely used in image compression, noise reduction, and data analysis.
+
+
+\section{Implementation of SVD (svd.c)}
+
+The file \texttt{svd.c} implements the core mathematical functions used for Singular Value Decomposition (SVD) in image compression.
+
+\subsection*{1. \texttt{power\_iteration()}}
+This function finds the dominant eigenvalues and eigenvectors of the matrix \(A^T A\) using the \textbf{Power Iteration algorithm}.  
+It initializes a random vector \(b\) and repeatedly applies the update:
+\[
+b_{new} = \frac{A^T A b}{\|A^T A b\|}
+\]
+until convergence.  
+The corresponding eigenvalue is estimated as:
+\[
+\lambda = b^T (A^T A) b
+\]
+After each dominant eigenpair is found, deflation is applied to remove its influence:
+\[
+W = W - \lambda \, b b^T
+\]
+This process repeats for the top \(k\) components.
+
+\subsection*{2. \texttt{compute\_svd()}}
+This function performs the overall SVD process:
+\begin{enumerate}
+    \item Computes \(A^T\) and \(A^T A\).
+    \item Calls \texttt{power\_iteration()} to get eigenvalues and eigenvectors.
+    \item Computes singular values as \(S_i = \sqrt{|\lambda_i|}\).
+    \item Calculates left singular vectors \(U_i = (A V_i) / S_i\).
+\end{enumerate}
+The result gives the top \(k\) singular components used for compression.
+
+\subsection*{3. \texttt{reconstruct()}}
+This function reconstructs the image using the top \(k\) singular components:
+\[
+A_k = U_k \Sigma_k V_k^T
+\]
+This produces a compressed version of the image while preserving most of the important visual features.
+
+% --------------------------------------------------
+\section{Power Iteration Algorithm}
+
+In this project, the \textbf{Power Iteration algorithm} is used inside the \texttt{compute\_svd()} function to find the largest eigenvalues and eigenvectors of the matrix \(A^T A\). 
+These are required to calculate the top singular values for the SVD. 
+Instead of computing all eigenvalues, the algorithm iteratively multiplies a random vector by \(A^T A\) until it converges to the dominant direction. 
+This method is simple, efficient, and suitable for large image matrices. 
+It allows the program to compute only the top \(k\) singular values, which are later used for image compression.
+
+% --------------------------------------------------
+\section{Results}
+The algorithm was tested on three images (Einstein, Globe, Grayscale) for different $k$ values.
+Below are example reconstructions:
+
+\begin{figure}
+\textbf{Outputs for Image 1:}\\
+\centering
+\includegraphics[width=0.22\linewidth]{figs/output_1_k10.jpg}
+\includegraphics[width=0.22\linewidth]{figs/output_1_k20.jpg}
+\caption{ $k10$ , $k20$}
+\end{figure}
+
+\begin{figure}
+\textbf{Outputs for Image 2:}\\
+\centering
+\includegraphics[width=0.22\linewidth]{figs/output_2_k25.jpg}
+\includegraphics[width=0.22\linewidth]{figs/output_2_k40.jpg}
+\caption{ $k25$ , $k40$}
+\end{figure}
+
+\begin{figure}
+\textbf{Outputs for Image 3:}\\
+\centering
+\includegraphics[width=0.22\linewidth]{figs/output_3_k2.jpg}
+\includegraphics[width=0.22\linewidth]{figs/output_3_k10.jpg}
+\caption{  $k2$ , $k10$}
+\end{figure}
+
+\section{Error Analysis}
+The approximation error is computed using the Frobenius norm:
+\[
+\|A - A_k\|_F = \sqrt{\sum_{i,j} (A_{ij} - (A_k)_{ij})^2}
+\]
+This metric quantifies the loss of information as $k$ decreases.  
+The results show that the error decreases rapidly for small $k$, confirming that the leading singular values carry most of the image energy.
+
+\section{Pros and Cons of Power Iteration Algorithm}
+
+The \textbf{Power Iteration algorithm} is simple, efficient, and requires very little memory, 
+making it suitable for finding the largest eigenvalue and eigenvector of large matrices like \(A^T A\). 
+It works well for image compression where only the top singular values are needed. 
+However, it finds only one eigenvalue at a time, converges slowly when eigenvalues are close, 
+and depends on the initial random vector. 
+Despite these limitations, it is ideal for truncated SVD applications due to its simplicity and low computational cost.
+\end{document}
